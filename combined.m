@@ -1,8 +1,11 @@
 % Theoritical
 % variables
 % time difference
-time_small_step = 0.01;
-time_full = 0:0.0001:1;
+start_time = 0;
+end_time = 1;
+
+time_small_step = (end_time - start_time) / 10000;
+time_full = start_time:time_small_step:end_time;
 % mass of the two objects
 m1 = 0.672;
 m2 = 0.969;
@@ -193,6 +196,3 @@ title('E.Accerleration 2')
 xlabel('time (s)')
 ylabel('accerlertion (ms-2)')
 
-[max_disp, max_disp_index] = max(disp);
-acc_at_max_disp = intrapolated_acc(max_disp_index);
-fprintf('max_displacement = %im \nacc at max dis = %im\n', max_disp, acc_at_max_disp)
