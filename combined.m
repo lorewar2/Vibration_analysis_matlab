@@ -1,3 +1,4 @@
+
 % Theoritical
 % variables
 % time difference
@@ -6,23 +7,19 @@ end_time = 10;
 
 time_small_step = (end_time - start_time) / 10000;
 time_full = start_time:time_small_step:end_time;
+
 % mass of the two objects
 m1 = 0.672;
 m2 = 0.969;
-force = 0.105;
-kA = 1056;
-cA = 482;
-current_error = 100000;
-previous_error = 100000;
+force = 0.05;
+k1 = 300;
+k2 = 300;
+c1 = 200;
+c2 = 200;
+
 while (1)
-    % spring stiffness 
-    k1 = kA;
-    k2 = kA;
-    % spring dampness
-    c1 = cA;
-    c2 = cA;
     % motor rotational velocity rad per second
-    omega = 25; % 733
+    omega = 23.3; % 733
     
     % force 
     f1 = force * sin(omega * time_full); % 5.3
@@ -119,32 +116,42 @@ while (1)
         disp_1(end + 1) = 0.5 * time_gap * vel_sum_1;
         disp_2(end + 1) = 0.5 * time_gap * vel_sum_2; 
     end
-    % find the amplitude and wave length
-    % theory
-    [max_y1, max_y1_index] = max(y1);
-    [min_y1, min_y1_index] = min(y1);
-    amp_y1 = max_y1 - min_y1;
-    wave_len_y1 = time_full(max_y1_index) - time_full(min_y1_index);
-
-    % exp
-    [max_disp_1, max_disp_1_index] = max(disp_1);
-    [min_disp_1, min_disp_1_index] = min(disp_1);
-    amp_disp_1 = max_disp_1 - min_disp_1;
-    wave_len_disp_1 = time_full(max_disp_1_index) - time_full(min_disp_1_index);
-
-    previous_error = current_error;
-    current_error = immse(amp_y1, amp_disp_1);
-    fprintf('%i %i\n', current_error, kA);
-    if previous_error < current_error
-        break
+    % find a wave in theoritical and experimental
+    % find the index of the time required
+    index = 0;
+    for time = time_full
+        index = index + 1;
+        if time > 5
+            break;
+        end
     end
+    % theoritical wave start and end
+    [t_wstart, t_wend] = get_wave_start_end(y1, index);
+    
+    % experimental wave start and end
+    [e_wstart, e_wend] = get_wave_start_end(disp_1, index);
+
     break;
 end
+% get the relative points from 0
+t_relative = get_relative_points(y1, t_wstart, t_wend);
+e_relative = get_relative_points(disp_1, e_wstart, e_wend);
+fprintf('theory wave length %x \n', time_full(t_wend) - time_full(t_wstart));
+fprintf('experimental wave length %x \n', time_full(e_wend) - time_full(e_wstart));
+
+% calculate point wise distance
+error_sum = 0;
+for i = 1:length(t_relative)
+    diff = t_relative(i) - e_relative(i);
+    error_sum = error_sum + (diff ^ 2);
+end
+error_mean = error_sum / length(t_relative);
+fprintf('sum of point wise distance: %x \n', error_mean);
 
 
 % plot the graph
 figure;
-tiledlayout(6,2)
+tiledlayout(2,2)
 nexttile
 plot(time_full, y1)
 title('T.Displacement of 1')
@@ -158,64 +165,156 @@ xlabel('time (s)')
 ylabel('displacement (m)')
 
 nexttile
-plot(time_full, y2)
-title('T.Displacement of 2')
+plot(time_full(t_wstart:t_wend), y1(t_wstart:t_wend))
+title('T.Displacement Wave')
 xlabel('time (s)')
 ylabel('displacement (m)')
 
 nexttile
-plot(time_full, disp_2)
-title('E.Displacement 2')
+plot(time_full(e_wstart:e_wend), disp_1(e_wstart:e_wend))
+title('E.Displacement Wave')
 xlabel('time (s)')
 ylabel('displacement (m)')
 
-nexttile
-plot(time_full, y3)
-title('T.Velocity of 1')
-xlabel('time (s)')
-ylabel('velocity (ms-1)')
+% nexttile
+% plot(time_full, y2)
+% title('T.Displacement of 2')
+% xlabel('time (s)')
+% ylabel('displacement (m)')
+% 
+% nexttile
+% plot(time_full, disp_2)
+% title('E.Displacement 2')
+% xlabel('time (s)')
+% ylabel('displacement (m)')
 
-nexttile
-plot(time_full, vel_1)
-title('E.Velocity 1')
-xlabel('time (s)')
-ylabel('velocity (ms-1)')
+% nexttile
+% plot(time_full, y3)
+% title('T.Velocity of 1')
+% xlabel('time (s)')
+% ylabel('velocity (ms-1)')
+% 
+% nexttile
+% plot(time_full, vel_1)
+% title('E.Velocity 1')
+% xlabel('time (s)')
+% ylabel('velocity (ms-1)')
+% 
+% 
+% nexttile
+% plot(time_full, y4)
+% title('T.Velocity of 2')
+% xlabel('time (s)')
+% ylabel('velocity (ms-1)')
+% 
+% nexttile
+% plot(time_full, vel_2)
+% title('E.Velocity 2')
+% xlabel('time (s)')
+% ylabel('velocity (ms-1)')
+% 
+% nexttile
+% plot(time_full, x1dotdot)
+% title('T.Accerleration of 1')
+% xlabel('time (s)')
+% ylabel('accerleration (ms-2)')
+% 
+% nexttile
+% plot(time_full, intrapolated_acc_1)
+% title('E.Accerleration 1')
+% xlabel('time (s)')
+% ylabel('accerleration (ms-2)')
+% 
+% nexttile
+% plot(time_full, x2dotdot)
+% title('T.Accerleration of 2')
+% xlabel('time (s)')
+% ylabel('accerleration (ms-2)')
+% 
+% 
+% nexttile
+% plot(time_full, intrapolated_acc_2)
+% title('E.Accerleration 2')
+% xlabel('time (s)')
+% ylabel('accerlertion (ms-2)')
 
+function relative_points = get_relative_points(array, index_start, index_end)
+    relative_points = [];
+    lowest_point = array(index_start);
+    for i = array(index_start:index_end)
+        relative_points(end + 1) = i - lowest_point;
+    end
+end
 
-nexttile
-plot(time_full, y4)
-title('T.Velocity of 2')
-xlabel('time (s)')
-ylabel('velocity (ms-1)')
-
-nexttile
-plot(time_full, vel_2)
-title('E.Velocity 2')
-xlabel('time (s)')
-ylabel('velocity (ms-1)')
-
-nexttile
-plot(time_full, x1dotdot)
-title('T.Accerleration of 1')
-xlabel('time (s)')
-ylabel('accerleration (ms-2)')
-
-nexttile
-plot(time_full, intrapolated_acc_1)
-title('E.Accerleration 1')
-xlabel('time (s)')
-ylabel('accerleration (ms-2)')
-
-nexttile
-plot(time_full, x2dotdot)
-title('T.Accerleration of 2')
-xlabel('time (s)')
-ylabel('accerleration (ms-2)')
-
-
-nexttile
-plot(time_full, intrapolated_acc_2)
-title('E.Accerleration 2')
-xlabel('time (s)')
-ylabel('accerlertion (ms-2)')
+function [wstart, wend] = get_wave_start_end(array, index)
+    going_down = 1;
+    prev = array(index);
+    index = index + 1;
+    current = array(index);
+    if prev > current
+        going_down = 0;
+    end
+    if going_down
+        % find the start +ve to -ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev > current
+                break
+            end
+        end
+        wstart = index;
+        % go till -ve to +ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev < current
+                break
+            end
+        end
+        % find the end +ve to -ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev > current
+                break
+            end
+        end
+        wend = index;
+    else
+        % find the start -ve to +ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev < current
+                break
+            end
+        end
+        wstart = index;
+        % go till +ve to -ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev > current
+                break
+            end
+        end
+        % find the end -ve to +ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev < current
+                break
+            end
+        end
+        wend = index;
+    end
+    
+end
 
