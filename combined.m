@@ -264,8 +264,7 @@ function [wstart, wend] = get_wave_start_end(array, index)
                 break
             end
         end
-        wstart = index;
-        % go till -ve to +ve
+        % find the start -ve to +ve
         while(1)
             prev = array(index);
             index = index + 1;
@@ -274,12 +273,22 @@ function [wstart, wend] = get_wave_start_end(array, index)
                 break
             end
         end
-        % find the end +ve to -ve
+        wstart = index;
+        % go till +ve to -ve
         while(1)
             prev = array(index);
             index = index + 1;
             current = array(index);
             if prev > current
+                break
+            end
+        end
+        % find the end -ve to +ve
+        while(1)
+            prev = array(index);
+            index = index + 1;
+            current = array(index);
+            if prev < current
                 break
             end
         end
